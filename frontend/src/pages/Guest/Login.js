@@ -1,0 +1,53 @@
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { loginAPI } from "../../api/authAPI";
+import { useNavigate } from "react-router-dom";
+import { login } from "../../state/authSlice";
+import "./Login.css";
+
+export default function Login() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [error, setError] = useState(""); 
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    const credentials = {
+      Username: e.target.username.value,
+      Password: e.target.password.value,
+    };
+
+    try {
+      const res = await loginAPI(credentials);
+      dispatch(login(res.data));
+      localStorage.setItem("auth", JSON.stringify(res.data));
+      navigate("/");
+    } catch (err) {
+      console.error("Login failed:", err);
+      setError("Invalid username or password"); 
+    }
+  };
+
+  return (
+    <div className="auth-container">
+      <h2>Login</h2>
+      <form className="auth-form" onSubmit={handleLogin}>
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+        />
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+        />
+
+        <button type="submit">Login</button>
+        {error && <p className="auth-error">{error}</p>}
+      </form>
+    </div>
+  );
+}
