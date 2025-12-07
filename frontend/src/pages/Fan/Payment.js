@@ -12,6 +12,7 @@ export default function Payment() {
   const [cardNumber, setCardNumber] = useState("");
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
+  const [ticketId, setTicketId] = useState(null); // store the ticketId
 
   const handleReserve = async () => {
     if (!cardNumber || !pin) {
@@ -21,9 +22,10 @@ export default function Payment() {
 
     setLoading(true);
     try {
-      await reserveSeatAPI(seatId, token);
-      alert(`Seat ${seatId} reserved successfully!`);
-      navigate("/"); // go back home
+      const res = await reserveSeatAPI(seatId, token);
+      // Extract ticketId from the response
+      const ticket = res.data?.message?.ticketId;
+      setTicketId(ticket);
     } catch (err) {
       console.error(err);
       alert("Failed to reserve seat");
@@ -38,23 +40,35 @@ export default function Payment() {
       <p>Match ID: {matchId}</p>
       <p>Seat ID: {seatId}</p>
 
-      <input
-        type="text"
-        placeholder="Credit Card Number"
-        value={cardNumber}
-        onChange={(e) => setCardNumber(e.target.value)}
-      />
+      {!ticketId && (
+        <>
+          <input
+            type="text"
+            placeholder="Credit Card Number"
+            value={cardNumber}
+            onChange={(e) => setCardNumber(e.target.value)}
+          />
 
-      <input
-        type="password"
-        placeholder="PIN"
-        value={pin}
-        onChange={(e) => setPin(e.target.value)}
-      />
+          <input
+            type="password"
+            placeholder="PIN"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+          />
 
-      <button onClick={handleReserve} disabled={loading}>
-        {loading ? "Processing..." : "Reserve Seat"}
-      </button>
+          <button onClick={handleReserve} disabled={loading}>
+            {loading ? "Processing..." : "Reserve Seat"}
+          </button>
+        </>
+      )}
+
+      {ticketId && (
+        <div className="ticket-info">
+          <h3>Reservation Successful!</h3>
+          <p>Your Ticket ID: <strong>{ticketId}</strong></p>
+          <button onClick={() => navigate("/")}>Go Back Home</button>
+        </div>
+      )}
     </div>
   );
 }
