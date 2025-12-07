@@ -19,6 +19,8 @@ export default function ManagerDashboard() {
   const [showCreateMatch, setShowCreateMatch] = useState(false);
   const [showCreateStadium, setShowCreateStadium] = useState(false);
   const [editingMatch, setEditingMatch] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchMatches();
@@ -31,6 +33,7 @@ export default function ManagerDashboard() {
       setMatches(res.data);
     } catch (err) {
       console.error(err);
+      setError("Failed to load matches");
     }
   };
 
@@ -40,11 +43,15 @@ export default function ManagerDashboard() {
       setStadiums(res.data);
     } catch (err) {
       console.error(err);
+      setError("Failed to load stadiums");
     }
   };
 
   const handleCreateMatch = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+    
     const formData = new FormData(e.target);
     const matchData = {
       Hometeam: formData.get("Hometeam"),
@@ -55,78 +62,121 @@ export default function ManagerDashboard() {
       Lineref2: formData.get("Lineref2"),
       stadiumId: parseInt(formData.get("stadiumId")),
     };
+    
     try {
-      await createMatchAPI(matchData);
-      fetchMatches();
-      setShowCreateMatch(false);
-      e.target.reset();
+      const response = await createMatchAPI(matchData);
+      if (response.data && response.data.message === "Match created successfully") {
+        fetchMatches();
+        setShowCreateMatch(false);
+        e.target.reset();
+        alert("Match created successfully!");
+      } else {
+        throw new Error(response.data?.message || "Failed to create match");
+      }
     } catch (err) {
-      alert("Error creating match: " + (err.response?.data?.message || err.message));
+      const errorMsg = err.response?.data?.message || err.message || "Error creating match";
+      setError(errorMsg);
+      alert("Error: " + errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUpdateMatch = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+    
     const formData = new FormData(e.target);
     const matchData = {
-      Hometeam: formData.get("Hometeam"),
-      Awayteam: formData.get("Awayteam"),
-      Date: formData.get("Date"),
-      Mainref: formData.get("Mainref"),
-      Lineref1: formData.get("Lineref1"),
-      Lineref2: formData.get("Lineref2"),
-      StadiumId: parseInt(formData.get("stadiumId")),
+      Hometeam: formData.get("Hometeam") || undefined,
+      Awayteam: formData.get("Awayteam") || undefined,
+      Date: formData.get("Date") || undefined,
+      Mainref: formData.get("Mainref") || undefined,
+      Lineref1: formData.get("Lineref1") || undefined,
+      Lineref2: formData.get("Lineref2") || undefined,
+      StadiumId: formData.get("stadiumId") ? parseInt(formData.get("stadiumId")) : undefined,
+      // Get stadium name for Matchvenue if stadium is selected
+      Matchvenue: formData.get("stadiumId") ? 
+        stadiums.find(s => s.id === parseInt(formData.get("stadiumId")))?.name : undefined
     };
     
     try {
-      await updateMatchAPI(editingMatch.id, matchData);
-      fetchMatches();
-      setEditingMatch(null);
-      alert("Match updated successfully!");
+      const response = await updateMatchAPI(editingMatch.id, matchData);
+      if (response.data && response.data.message === "Match updated successfully") {
+        fetchMatches();
+        setEditingMatch(null);
+        alert("Match updated successfully!");
+      } else {
+        throw new Error(response.data?.message || "Failed to update match");
+      }
     } catch (err) {
-      alert("Error updating match: " + (err.response?.data?.message || err.message));
+      const errorMsg = err.response?.data?.message || err.message || "Error updating match";
+      setError(errorMsg);
+      alert("Error: " + errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCreateStadium = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+    
     const formData = new FormData(e.target);
     const stadiumData = {
       name: formData.get("name"),
       width: parseInt(formData.get("width")),
       length: parseInt(formData.get("length")),
     };
+    
     try {
-      await createStadiumAPI(stadiumData);
-      fetchStadiums();
-      setShowCreateStadium(false);
-      e.target.reset();
+      const response = await createStadiumAPI(stadiumData);
+      if (response.data && response.data.message === "User authorized successfully") {
+        fetchStadiums();
+        setShowCreateStadium(false);
+        e.target.reset();
+        alert("Stadium created successfully!");
+      } else {
+        throw new Error(response.data?.message || "Failed to create stadium");
+      }
     } catch (err) {
-      alert("Error creating stadium: " + (err.response?.data?.message || err.message));
+      const errorMsg = err.response?.data?.message || err.message || "Error creating stadium";
+      setError(errorMsg);
+      alert("Error: " + errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleViewSeats = async (match) => {
     try {
       const res = await getMatchSeatsAPI(match.id);
-      setSeats(res.data);
-      setSelectedMatch(match.id);
-            const stadium = stadiums.find(s => s.id === match.StadiumId);
-      if (stadium) {
-        setStadiumDimensions({
-          width: stadium.width,
-          length: stadium.length
-        });
-      } else {
-        const maxCol = Math.max(...res.data.map(s => s.col));
-        const maxRow = Math.max(...res.data.map(s => s.r));
-        setStadiumDimensions({
-          width: maxCol,
-          length: maxRow
-        });
+      if (res.data && res.data.seats) {
+        setSeats(res.data.seats);
+        setSelectedMatch(match.id);
+        
+        // Find stadium dimensions for this match
+        const stadium = stadiums.find(s => s.id === match.StadiumId);
+        if (stadium) {
+          setStadiumDimensions({
+            width: stadium.width,
+            length: stadium.length
+          });
+        } else {
+          // Calculate from seats data if stadium not found
+          const maxCol = Math.max(...res.data.seats.map(s => s.col));
+          const maxRow = Math.max(...res.data.seats.map(s => s.r));
+          setStadiumDimensions({
+            width: maxCol,
+            length: maxRow
+          });
+        }
       }
     } catch (err) {
       console.error(err);
+      setError("Failed to load seat data");
     }
   };
 
@@ -138,6 +188,7 @@ export default function ManagerDashboard() {
     setEditingMatch(null);
   };
 
+  // Function to organize seats into rows
   const organizeSeatsByRows = () => {
     const organizedSeats = [];
     
@@ -155,41 +206,66 @@ export default function ManagerDashboard() {
 
   const organizedSeats = organizeSeatsByRows();
 
+  // Format date for datetime-local input
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toISOString().slice(0, 16);
+  };
+
   return (
     <div className="manager-container">
       <h2>EFA Manager Dashboard</h2>
 
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+
       <div className="action-buttons">
-        <button onClick={() => setShowCreateMatch(true)}>Create New Match</button>
-        <button onClick={() => setShowCreateStadium(true)}>Add New Stadium</button>
+        <button onClick={() => setShowCreateMatch(true)} disabled={loading}>
+          Create New Match
+        </button>
+        <button onClick={() => setShowCreateStadium(true)} disabled={loading}>
+          Add New Stadium
+        </button>
       </div>
 
+      {/* Create Match Form */}
       {showCreateMatch && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>Create New Match</h3>
             <form onSubmit={handleCreateMatch}>
-              <input name="Hometeam" placeholder="Home Team" required />
-              <input name="Awayteam" placeholder="Away Team" required />
-              <input name="Date" type="datetime-local" required />
-              <input name="Mainref" placeholder="Main Referee" required />
-              <input name="Lineref1" placeholder="Linesman 1" required />
-              <input name="Lineref2" placeholder="Linesman 2" required />
-              <select name="stadiumId" required>
+              <input name="Hometeam" placeholder="Home Team" required disabled={loading} />
+              <input name="Awayteam" placeholder="Away Team" required disabled={loading} />
+              <input name="Date" type="datetime-local" required disabled={loading} />
+              <input name="Mainref" placeholder="Main Referee" required disabled={loading} />
+              <input name="Lineref1" placeholder="Linesman 1" required disabled={loading} />
+              <input name="Lineref2" placeholder="Linesman 2" required disabled={loading} />
+              <select name="stadiumId" required disabled={loading}>
                 <option value="">Select Stadium</option>
                 {stadiums.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.width}x{s.length})</option>
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.width}x{s.length})
+                  </option>
                 ))}
               </select>
               <div className="form-buttons">
-                <button type="submit">Create Match</button>
-                <button type="button" onClick={() => setShowCreateMatch(false)}>Cancel</button>
+                <button type="submit" disabled={loading}>
+                  {loading ? "Creating..." : "Create Match"}
+                </button>
+                <button type="button" onClick={() => setShowCreateMatch(false)} disabled={loading}>
+                  Cancel
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* Edit Match Form */}
       {editingMatch && (
         <div className="modal-overlay">
           <div className="modal">
@@ -200,38 +276,44 @@ export default function ManagerDashboard() {
                 placeholder="Home Team" 
                 defaultValue={editingMatch.Hometeam}
                 required 
+                disabled={loading}
               />
               <input 
                 name="Awayteam" 
                 placeholder="Away Team" 
                 defaultValue={editingMatch.Awayteam}
                 required 
+                disabled={loading}
               />
               <input 
                 name="Date" 
                 type="datetime-local" 
-                defaultValue={editingMatch.Date ? new Date(editingMatch.Date).toISOString().slice(0, 16) : ""}
+                defaultValue={formatDateForInput(editingMatch.Date)}
                 required 
+                disabled={loading}
               />
               <input 
                 name="Mainref" 
                 placeholder="Main Referee" 
                 defaultValue={editingMatch.Mainref}
                 required 
+                disabled={loading}
               />
               <input 
                 name="Lineref1" 
                 placeholder="Linesman 1" 
                 defaultValue={editingMatch.Lineref1}
                 required 
+                disabled={loading}
               />
               <input 
                 name="Lineref2" 
                 placeholder="Linesman 2" 
                 defaultValue={editingMatch.Lineref2}
                 required 
+                disabled={loading}
               />
-              <select name="stadiumId" required>
+              <select name="stadiumId" required disabled={loading}>
                 <option value="">Select Stadium</option>
                 {stadiums.map(s => (
                   <option 
@@ -244,33 +326,43 @@ export default function ManagerDashboard() {
                 ))}
               </select>
               <div className="form-buttons">
-                <button type="submit">Update Match</button>
-                <button type="button" onClick={handleCancelEdit}>Cancel</button>
+                <button type="submit" disabled={loading}>
+                  {loading ? "Updating..." : "Update Match"}
+                </button>
+                <button type="button" onClick={handleCancelEdit} disabled={loading}>
+                  Cancel
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* Create Stadium Form */}
       {showCreateStadium && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>Add New Stadium</h3>
             <form onSubmit={handleCreateStadium}>
-              <input name="name" placeholder="Stadium Name" required />
-              <input name="width" type="number" placeholder="Width (seats per row)" min="1" required />
-              <input name="length" type="number" placeholder="Length (rows)" min="1" required />
+              <input name="name" placeholder="Stadium Name" required disabled={loading} />
+              <input name="width" type="number" placeholder="Width (seats per row)" min="1" required disabled={loading} />
+              <input name="length" type="number" placeholder="Length (rows)" min="1" required disabled={loading} />
               <div className="form-buttons">
-                <button type="submit">Add Stadium</button>
-                <button type="button" onClick={() => setShowCreateStadium(false)}>Cancel</button>
+                <button type="submit" disabled={loading}>
+                  {loading ? "Adding..." : "Add Stadium"}
+                </button>
+                <button type="button" onClick={() => setShowCreateStadium(false)} disabled={loading}>
+                  Cancel
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* Matches List */}
       <div className="card">
-        <h3>All Matches</h3>
+        <h3>All Matches ({matches.length})</h3>
         <table className="manager-table">
           <thead>
             <tr>
@@ -279,42 +371,50 @@ export default function ManagerDashboard() {
               <th>Away</th>
               <th>Venue</th>
               <th>Date</th>
-              <th>Stadium Size</th>
+              <th>Referee</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {matches.map(m => {
-              const stadium = stadiums.find(s => s.id === m.StadiumId);
-              return (
+            {matches.length === 0 ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: "center", padding: "20px" }}>
+                  No matches found. Create your first match!
+                </td>
+              </tr>
+            ) : (
+              matches.map(m => (
                 <tr key={m.id}>
                   <td>{m.id}</td>
                   <td>{m.Hometeam}</td>
                   <td>{m.Awayteam}</td>
                   <td>{m.Matchvenue}</td>
                   <td>{m.Date ? new Date(m.Date).toLocaleString() : "N/A"}</td>
-                  <td>{stadium ? `${stadium.width}×${stadium.length}` : "N/A"}</td>
+                  <td>{m.Mainref}</td>
                   <td className="actions-cell">
                     <button 
                       className="edit-btn"
                       onClick={() => handleEditMatch(m)}
+                      disabled={loading}
                     >
                       Edit
                     </button>
                     <button 
                       className="view-btn"
                       onClick={() => handleViewSeats(m)}
+                      disabled={loading}
                     >
                       View Seats
                     </button>
                   </td>
                 </tr>
-              );
-            })}
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
+      {/* Seat View - Now in rectangular layout */}
       {selectedMatch && stadiumDimensions.width > 0 && (
         <div className="card">
           <h3>Seat Status for Match {selectedMatch}</h3>
@@ -327,7 +427,7 @@ export default function ManagerDashboard() {
             Vacant Seats: {seats.filter(s => !s.reserved).length}
           </p>
           
-          {/*rec */}
+          {/* Stadium Layout - Rectangular Grid */}
           <div className="stadium-layout">
             <div className="stadium-grid">
               {/* Column Headers */}
@@ -340,6 +440,7 @@ export default function ManagerDashboard() {
                 ))}
               </div>
               
+              {/* Rows with seat data */}
               {organizedSeats.map((rowSeats, rowIndex) => (
                 <div key={`row-${rowIndex}`} className="stadium-row">
                   <div className="row-header">Row {rowIndex + 1}</div>
@@ -358,6 +459,7 @@ export default function ManagerDashboard() {
             </div>
           </div>
           
+          {/* Legend */}
           <div className="seat-legend">
             <div className="legend-item">
               <div className="legend-box vacant"></div>
@@ -373,7 +475,9 @@ export default function ManagerDashboard() {
             </div>
           </div>
           
-          <button className="close-btn" onClick={() => setSelectedMatch(null)}>Close Seat View</button>
+          <button className="close-btn" onClick={() => setSelectedMatch(null)} disabled={loading}>
+            Close Seat View
+          </button>
         </div>
       )}
     </div>
