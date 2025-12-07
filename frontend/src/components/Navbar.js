@@ -3,10 +3,12 @@ import { useSelector, useDispatch } from "react-redux";
 import "./Navbar.css";
 
 export default function Navbar() {
-  const auth  = useSelector((state) => state.auth);
+  const auth = useSelector((state) => state.auth);
   return (
     <nav className="navbar">
       <Link to="/" className="nav-link">Home</Link>
+      <Link to="/edit-profile" className="nav-link">Profile</Link>
+
       {(auth && auth.user) ? (
         <>
           <span className="nav-user">Welcome, {auth.user.Username}</span>
@@ -17,6 +19,7 @@ export default function Navbar() {
           <Link to="/signup" className="nav-link">Signup</Link>
         </>
       )}
+
     </nav>
   );
 }

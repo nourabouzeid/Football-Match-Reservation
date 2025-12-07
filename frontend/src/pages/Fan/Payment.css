@@ -1,0 +1,64 @@
+.match-details-container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fafafa;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.match-info p {
+    margin: 4px 0;
+}
+
+.seat-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 15px;
+}
+
+.seat-row {
+    display: flex;
+    gap: 5px;
+}
+
+.seat {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.vacant {
+    background-color: #d4edda;
+}
+
+.reserved {
+    background-color: #f8d7da;
+    cursor: not-allowed;
+}
+
+.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+.reserve-btn {
+    margin-top: 15px;
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.reserve-btn:hover {
+    background-color: #218838;
+}
