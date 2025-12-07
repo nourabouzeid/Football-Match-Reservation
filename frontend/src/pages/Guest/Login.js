@@ -29,7 +29,11 @@ export default function Login() {
       
       dispatch(login(res.data));
       localStorage.setItem("auth", JSON.stringify(res.data));
-      navigate("/");
+      console.log(res.data.user.Role);
+      if (res.data.user.Role === 1) navigate("/admin");
+      else if (res.data.user.Role === 2) navigate("/manager");
+      else navigate("/");
+
     } catch (err) {
         if (err.response) {
             console.log("Server error:", err.response.data);
