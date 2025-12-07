@@ -14,5 +14,23 @@ export const viewSeatsAPI = async (matchId) => {
   });
 };
 
+export const reserveSeatAPI = async (seatId, token) => {
+  return axios.put(`${config.API_URL}/matches/reserveSeat/${seatId}`, {}, {
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    }
+  });
+};
+
+export const unReserveSeatAPI = async (seatId, token) => {
+  return axios.put(`${config.API_URL}/matches/unreserveSeat/${seatId}`, {}, {
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    }
+  });
+};
+
 
 

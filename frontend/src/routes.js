@@ -7,6 +7,9 @@ import Signup from "./pages/Guest/Signup";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import ManagerDashboard from "./pages/Manager/ManagerDashboard";
 import MatchDetails from "./pages/Common/MatchDetails";
+import EditProfile from "./pages/Fan/EditProfile";
+import Payment from "./pages/Fan/Payment";
+
 
 export default function AppRoutes() {
   return (
@@ -19,6 +22,8 @@ export default function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/match/:id" element={<MatchDetails />} />
+        <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/payment" element={<Payment />} />
       </Routes>
     </Router>
   );

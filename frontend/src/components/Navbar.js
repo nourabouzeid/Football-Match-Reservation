@@ -8,6 +8,7 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <Link to="/" className="nav-link">Home</Link>
+      <Link to="/edit-profile" className="nav-link">Profile</Link>
       
       {auth && auth.user && auth.user.Role === 2 && (
         <Link to="/manager" className="nav-link">Manage</Link>
