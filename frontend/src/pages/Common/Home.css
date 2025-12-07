@@ -1,14 +1,36 @@
-.home-container {
-    padding: 20px;
+.home-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.home-button:hover {
+    background-color: #0056b3;
+}
+
+.matches-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.matches-table th,
+.matches-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
     text-align: center;
 }
 
-.home-container h1 {
-    color: #333;
-    margin-bottom: 10px;
+.matches-table th {
+    background-color: #f0f0f0;
 }
 
-.home-container p {
-    font-size: 16px;
-    color: #666;
+.home-error {
+    color: red;
+    margin-top: 10px;
 }

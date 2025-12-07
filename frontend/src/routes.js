@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Common/Home";
 import Login from "./pages/Guest/Login";
 import Signup from "./pages/Guest/Signup";
+import MatchDetails from "./pages/Common/MatchDetails";
 
 export default function AppRoutes() {
   return (
@@ -13,6 +14,7 @@ export default function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/match/:id" element={<MatchDetails />} />
       </Routes>
     </Router>
   );

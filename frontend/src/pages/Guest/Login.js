@@ -20,12 +20,24 @@ export default function Login() {
 
     try {
       const res = await loginAPI(credentials);
+      
+      const message = res.data.message
+      if(message == "User not authorized") {
+        setError("User not authorized")
+        return;
+      }
+      
       dispatch(login(res.data));
       localStorage.setItem("auth", JSON.stringify(res.data));
       navigate("/");
     } catch (err) {
-      console.error("Login failed:", err);
-      setError("Invalid username or password"); 
+        if (err.response) {
+            console.log("Server error:", err.response.data);
+            setError(err.response.data.message || "Login failed");
+          } else {
+            console.log("Network/Other error:", err);
+            setError("Network error. Try again.");
+          }
     }
   };
 
